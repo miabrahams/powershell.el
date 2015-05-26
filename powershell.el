@@ -790,7 +790,7 @@ window. In some cases callers might want to get the results with the
 newlines and formatting removed. Set this to true, to do that."
 :group 'powershell)
 
-(defvar powershell-prompt-regex  "PS [^#$%>]+> "
+(defvar powershell-prompt-regex  "^\\(PS \\)?.:[^>]*> "
   "Regexp to match the powershell prompt.
 Powershell.el uses this regex to determine when a command has
 completed.  Therefore, you need to set this appropriately if you
@@ -798,7 +798,7 @@ explicitly change the prompt function in powershell.  Any value
 should include a trailing space, if the powershell prompt uses a
 trailing space, but should not include a trailing newline.
 
-The default value will match the default PowerShell prompt.")
+The default value will match the default PowerShell prompt or the Posh-Git prompt.")
 
 (defvar powershell-command-reply nil
   "The reply of powershell commands.
@@ -846,33 +846,26 @@ set the window width. Intended for internal use only.")
   ;; size first. When making the console window wider, you must set the
   ;; buffer size first.
 
-    (concat  "function " powershell--set-window-width-fn-name
-             "([string] $pswidth)\n"
-             "{\n"
-             ;;"  \"resetting window width to $pswidth\n\" | Out-Host\n"
-             "  $rawui = (Get-Host).UI.RawUI\n"
-             "  # retrieve the values\n"
-             "  $bufsize = $rawui.BufferSize\n"
-             "  $winsize = $rawui.WindowSize\n"
-             "  $cwidth = $winsize.Width\n"
-             "  $winsize.Width = $pswidth \n"
-             "  $bufsize.Width = $pswidth\n"
-             "  if ($cwidth -lt $pswidth) {\n"
-             "    # increase the width\n"
-             "    $rawui.BufferSize = $bufsize\n"
-             "    $rawui.WindowSize = $winsize\n"
-             "  }\n"
-             "  elseif ($cwidth -gt $pswidth) {\n"
-             "    # decrease the width\n"
-             "    $rawui.WindowSize = $winsize\n"
-             "    $rawui.BufferSize = $bufsize\n"
-             "  }\n"
-             "  # destroy variables\n"
-             "  Set-Variable -name rawui -value $null\n"
-             "  Set-Variable -name winsize -value $null\n"
-             "  Set-Variable -name bufsize -value $null\n"
-             "  Set-Variable -name cwidth -value $null\n"
-             "}\n\n")
+  (concat  "function " powershell--set-window-width-fn-name
+           "([string] $pswidth)\n"
+           "{\n"
+           "  $rawui = (Get-Host).UI.RawUI\n"
+           "  # retrieve the values\n"
+           "  $cwidth = $rawui.WindowSize.Width\n"
+           "  if ($cwidth -lt $pswidth) {\n"
+           "    $rawui.BufferSize.Width = $pswidth\n"
+           "    $rawui.WindowSize.Width = $pswidth\n"
+           "  }\n"
+           "  elseif ($cwidth -gt $pswidth) {\n"
+           "    $rawui.WindowSize.Width = $pswidth\n"
+           "    $rawui.BufferSize.Width = $pswidth\n"
+           "  }\n"
+           "  # destroy variables\n"
+           "  Set-Variable -name rawui -value $null\n"
+           "  Set-Variable -name winsize -value $null\n"
+           "  Set-Variable -name bufsize -value $null\n"
+           "  Set-Variable -name cwidth -value $null\n"
+           "}\n\n")
 
     "The text of the powershell function that will be used at runtime to
 set the width of the virtual Window in PowerShell, as the Emacs window
